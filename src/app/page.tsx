@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Policy, PolicyFilter } from "@/lib/types";
 import { filterPolicies } from "@/lib/filter";
 import { daysUntilDeadline, ddayLabel } from "@/lib/dday";
+import { getMockPolicies } from "@/data/mockPolicies";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 
@@ -16,26 +17,19 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<PolicyFilter>(EMPTY_FILTER);
 
-  // 접속(마운트) 시 서버 라우트에서 실시간으로 정책 목록을 가져옵니다.
+  // 접속(마운트) 시 정책 목록을 불러옵니다.
+  // GitHub Pages(정적 호스팅)에는 서버가 없으므로 데이터를 클라이언트에서 로드합니다.
+  // 날짜(D-Day) 계산이 "보는 시점" 기준으로 동작하도록 클라이언트에서만 실행합니다.
+  // → 실제 API 연동 시에는 빌드 시점에 생성한 정적 JSON 을 fetch 하도록 바꾸면 됩니다.
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const res = await fetch("/api/policies");
-        if (!res.ok) throw new Error("불러오기 실패");
-        const data = await res.json();
-        if (!alive) return;
-        setPolicies(data.policies ?? []);
-        setUpdatedAt(data.updatedAt ?? null);
-      } catch {
-        if (alive) setError("정책 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+    try {
+      setPolicies(getMockPolicies());
+      setUpdatedAt(new Date().toISOString());
+    } catch {
+      setError("정책 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // 필터는 브라우저에서 즉시 적용 (마감 임박순 정렬 포함)

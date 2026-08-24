@@ -22,6 +22,20 @@ npm run dev
 
 http://localhost:3000 접속.
 
+## 배포 (GitHub Pages)
+
+`main` 브랜치에 푸시하면 GitHub Actions가 자동으로 정적 빌드(`next build` →
+`output: "export"`)해서 GitHub Pages에 배포합니다.
+
+**최초 1회 설정**: 레포 → **Settings → Pages → Build and deployment → Source**를
+**GitHub Actions**로 지정하세요. 이후 배포 URL은
+`https://hyunsuyu.github.io/YoungManOn/` 입니다.
+
+> ⚠️ GitHub Pages는 서버가 없는 정적 호스팅이라 API 라우트가 동작하지 않습니다.
+> 현재는 목업 데이터를 클라이언트에서 렌더합니다. 실제 온통청년 API를 쓰려면
+> 브라우저 직접 호출은 CORS로 막히므로, **GitHub Actions 빌드 단계에서 API를 호출해
+> 정적 JSON을 생성**한 뒤 그 파일을 fetch 하는 방식(준실시간)으로 전환해야 합니다.
+
 ## 실제 API 연동 방법
 
 1. [온통청년](https://www.youthcenter.go.kr) 또는 [공공데이터포털](https://www.data.go.kr)에서
