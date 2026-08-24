@@ -1,8 +1,9 @@
 import type { Policy } from "@/lib/types";
 
-// 실제 온통청년 API 연동 전까지 사용하는 샘플 데이터입니다.
-// 필드 구성은 실제 API 응답을 정규화한 Policy 타입과 동일하므로,
-// 나중에 policySource.ts 에서 소스만 교체하면 화면 코드는 그대로 동작합니다.
+// 정적 JSON(public/data/policies.json)이 없을 때 사용하는 폴백 샘플 데이터입니다.
+// (로컬에서 데이터 미생성 시 / API 키 미설정 시)
+// 필드 구성은 실제 API 응답을 정규화한 Policy 타입과 동일합니다.
+// 실제 데이터 생성 로직은 scripts/generate-policies.mjs 를 참고하세요.
 
 /** 오늘로부터 offset 일 뒤의 날짜를 YYYY-MM-DD 로 반환 (D-Day 데모용) */
 function dateFromToday(offsetDays: number): string {
@@ -34,7 +35,7 @@ export function getMockPolicies(): Policy[] {
       id: "mock-002",
       title: "청년도약계좌",
       summary: "매월 납입액에 정부 기여금을 더해 5년 만기 목돈 마련을 지원합니다.",
-      category: "금융/자산",
+      category: "일자리",
       provider: "금융위원회",
       region: "전국",
       minAge: 19,
@@ -85,7 +86,7 @@ export function getMockPolicies(): Policy[] {
       id: "mock-005",
       title: "경기도 청년기본소득",
       summary: "만 24세 청년에게 분기별 지역화폐 25만원(연 100만원)을 지급합니다.",
-      category: "복지/문화",
+      category: "복지·문화",
       provider: "경기도",
       region: "경기",
       minAge: 24,
@@ -136,7 +137,7 @@ export function getMockPolicies(): Policy[] {
       id: "mock-008",
       title: "청년내일채움공제",
       summary: "중소기업 재직 청년의 자산형성을 위해 정부·기업이 함께 적립합니다.",
-      category: "금융/자산",
+      category: "일자리",
       provider: "고용노동부",
       region: "전국",
       minAge: 15,
@@ -153,7 +154,7 @@ export function getMockPolicies(): Policy[] {
       id: "mock-009",
       title: "청년 대중교통비 환급 (K-패스)",
       summary: "월 15회 이상 대중교통 이용 시 청년은 요금의 30%를 환급받습니다.",
-      category: "복지/문화",
+      category: "복지·문화",
       provider: "국토교통부",
       region: "전국",
       minAge: 19,
@@ -187,7 +188,7 @@ export function getMockPolicies(): Policy[] {
       id: "mock-011",
       title: "청년 마음건강 지원사업",
       summary: "청년에게 전문 심리상담 서비스를 최대 10회까지 지원합니다.",
-      category: "복지/문화",
+      category: "복지·문화",
       provider: "보건복지부",
       region: "전국",
       minAge: 19,

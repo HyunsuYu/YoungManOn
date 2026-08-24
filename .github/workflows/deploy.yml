@@ -4,6 +4,9 @@ on:
   # main 브랜치에 푸시될 때마다 자동 배포
   push:
     branches: [main]
+  # 매일 00:00 UTC(한국시간 09:00)에 재빌드하여 최신 정책으로 갱신 (준실시간)
+  schedule:
+    - cron: "0 0 * * *"
   # Actions 탭에서 수동 실행도 허용
   workflow_dispatch:
 
@@ -34,8 +37,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build (static export)
+      - name: Build (온통청년 API → 정적 JSON 생성 후 static export)
         run: npm run build
+        env:
+          # 레포 Settings > Secrets and variables > Actions 에 등록한 API 키.
+          # 키가 없으면 generate 스크립트가 목업으로 폴백합니다.
+          YOUTH_API_KEY: ${{ secrets.YOUTH_API_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

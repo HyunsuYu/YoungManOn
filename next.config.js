@@ -16,6 +16,10 @@ const nextConfig = {
   images: { unoptimized: true },
   // 각 경로를 폴더/index.html 형태로 내보내 Pages 라우팅과 잘 맞도록
   trailingSlash: true,
+  // 클라이언트에서 정적 JSON(fetch) 경로에 basePath 를 붙이기 위해 노출
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isProd ? `/${repo}` : "",
+  },
 };
 
 module.exports = nextConfig;

@@ -8,7 +8,11 @@ import { getMockPolicies } from "@/data/mockPolicies";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 
-const EMPTY_FILTER: PolicyFilter = { category: "전체", region: "전체" };
+const EMPTY_FILTER: PolicyFilter = {
+  category: "전체",
+  region: "전체",
+  hideExpired: true, // 기본적으로 신청 가능한 정책만 표시
+};
 
 export default function HomePage() {
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -18,18 +22,31 @@ export default function HomePage() {
   const [filter, setFilter] = useState<PolicyFilter>(EMPTY_FILTER);
 
   // 접속(마운트) 시 정책 목록을 불러옵니다.
-  // GitHub Pages(정적 호스팅)에는 서버가 없으므로 데이터를 클라이언트에서 로드합니다.
-  // 날짜(D-Day) 계산이 "보는 시점" 기준으로 동작하도록 클라이언트에서만 실행합니다.
-  // → 실제 API 연동 시에는 빌드 시점에 생성한 정적 JSON 을 fetch 하도록 바꾸면 됩니다.
+  // 빌드 시점에 온통청년 API 로 생성해 둔 정적 JSON(public/data/policies.json)을 fetch 합니다.
+  // 파일이 없거나(로컬에서 미생성) 실패하면 목업 데이터로 폴백합니다.
   useEffect(() => {
-    try {
-      setPolicies(getMockPolicies());
-      setUpdatedAt(new Date().toISOString());
-    } catch {
-      setError("정책 데이터를 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    let alive = true;
+    (async () => {
+      const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+      try {
+        const res = await fetch(`${base}/data/policies.json`);
+        if (!res.ok) throw new Error("no data file");
+        const data = await res.json();
+        if (!alive) return;
+        setPolicies(data.policies ?? []);
+        setUpdatedAt(data.updatedAt ?? new Date().toISOString());
+      } catch {
+        // 정적 JSON 이 없으면 목업으로 폴백 (개발 중이거나 API 키 미설정 시)
+        if (!alive) return;
+        setPolicies(getMockPolicies());
+        setUpdatedAt(new Date().toISOString());
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   // 필터는 브라우저에서 즉시 적용 (마감 임박순 정렬 포함)
@@ -132,7 +149,7 @@ export default function HomePage() {
       </div>
 
       <footer className="footer">
-        청년ON · 데이터 출처: 온통청년 · 공공데이터포털 (현재 샘플 데이터로 시연 중) ·
+        청년ON · 데이터 출처: 온통청년(youthcenter.go.kr) 청년정책 통합 API ·
         대학 과제 프로젝트
       </footer>
     </>

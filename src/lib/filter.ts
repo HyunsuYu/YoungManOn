@@ -1,5 +1,5 @@
 import type { Policy, PolicyFilter } from "./types";
-import { isExpired } from "./dday";
+import { isExpired, daysUntilDeadline } from "./dday";
 
 /** 정책 하나가 필터 조건을 통과하는지 검사 */
 function matches(policy: Policy, f: PolicyFilter): boolean {
@@ -58,9 +58,26 @@ export function filterPolicies(policies: Policy[], f: PolicyFilter): Policy[] {
     .sort((a, b) => sortByDeadline(a, b));
 }
 
-/** 마감 임박(가까운 마감일)이 위로, 상시/마감없음은 아래로 */
+// 정렬 우선순위 그룹: 마감 임박 정책(0) → 상시 접수(1) → 마감된 정책(2)
+function rankGroup(p: Policy): number {
+  const d = daysUntilDeadline(p);
+  if (d === null) return 1; // 상시
+  if (d < 0) return 2; // 마감
+  return 0; // 신청 가능
+}
+
+/**
+ * ① 신청 가능한 정책을 마감 임박순으로 위에,
+ * ② 그다음 상시 접수,
+ * ③ 마감된 정책은 맨 아래(최근에 마감된 순)로.
+ */
 function sortByDeadline(a: Policy, b: Policy): number {
+  const ga = rankGroup(a);
+  const gb = rankGroup(b);
+  if (ga !== gb) return ga - gb;
+
   const ax = a.applyEnd ? new Date(a.applyEnd).getTime() : Infinity;
   const bx = b.applyEnd ? new Date(b.applyEnd).getTime() : Infinity;
-  return ax - bx;
+  // 마감된 그룹은 최근 마감이 위로(내림차순), 나머지는 임박순(오름차순)
+  return ga === 2 ? bx - ax : ax - bx;
 }
