@@ -1198,7 +1198,7 @@ a {
 .banner-slide {
   flex: 0 0 100%;
   min-width: 0;
-  height: clamp(260px, 24vw, 380px);
+  height: clamp(340px, 34vw, 540px);
   display: flex;
   align-items: center;
   justify-content: space-between;
