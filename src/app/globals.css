@@ -193,7 +193,8 @@ a {
 }
 .results-head .count {
   font-size: 15px;
-  color: var(--text-sub);
+  font-weight: 600;
+  color: var(--text);
 }
 .results-head .count b {
   color: var(--primary);
