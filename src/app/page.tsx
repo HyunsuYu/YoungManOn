@@ -7,6 +7,7 @@ import type { SortOption } from "@/lib/filter";
 import { daysUntilDeadline, ddayLabel } from "@/lib/dday";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
+import BannerCarousel from "@/components/BannerCarousel";
 
 const PAGE_SIZE = 20;
 const TARGETS: PolicyTarget[] = ["대학생", "취업준비생", "재직자", "무직"];
@@ -165,16 +166,7 @@ function HomeContent() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="inner">
-          <span className="badge">청년ON · 청년·대학생 맞춤형 정책 큐레이터</span>
-          <h1>흩어진 청년 혜택, 청년ON에서 한 번에.</h1>
-          <p>
-            정부·지자체에 흩어진 청년 지원 정책을 나이·거주지·소득·신분에 맞춰
-            골라 보여드립니다. 놓치기 쉬운 신청 마감일도 D-Day로 한눈에 확인하세요.
-          </p>
-        </div>
-      </header>
+      <BannerCarousel />
 
       <div className="layout">
         <FilterPanel
