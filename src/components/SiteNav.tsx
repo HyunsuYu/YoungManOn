@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBookmarks } from "./BookmarkProvider";
+import ThemeToggle from "./ThemeToggle";
 
 export default function SiteNav() {
   const pathname = usePathname();
@@ -23,12 +24,16 @@ export default function SiteNav() {
           <Link href="/stats" className={active("/stats") ? "on" : ""}>
             통계
           </Link>
+          <Link href="/about" className={active("/about") ? "on" : ""}>
+            소개
+          </Link>
           <Link href="/bookmarks" className={active("/bookmarks") ? "on" : ""}>
             관심목록
             {ready && bookmarks.length > 0 && (
               <span className="nav-badge">{bookmarks.length}</span>
             )}
           </Link>
+          <ThemeToggle />
         </div>
       </div>
     </nav>

@@ -87,3 +87,15 @@ export interface UserProfile {
   target?: PolicyTarget;
   incomeFreeOnly?: boolean;
 }
+
+/** 통계 대시보드용 집계 결과 (서버에서 계산 후 캐싱) */
+export interface PolicyStats {
+  total: number;
+  active: number;
+  closingSoon: number;
+  always: number;
+  byCategory: [string, number][];
+  byRegion: [string, number][];
+  byTarget: [string, number][];
+  updatedAt: string;
+}

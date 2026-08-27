@@ -1,4 +1,5 @@
-import type { Policy, PolicyDetail, PolicyTarget } from "./types";
+import type { Policy, PolicyDetail, PolicyStats, PolicyTarget } from "./types";
+import { daysUntilDeadline, isExpired } from "./dday";
 
 // ─────────────────────────────────────────────────────────────
 //  온통청년(youthcenter.go.kr) 청년정책 통합 API — 서버 전용 데이터 계층
@@ -33,6 +34,47 @@ export async function getAllPolicies(): Promise<Policy[]> {
 /** 캐시가 마지막으로 갱신된 시각(ISO). 없으면 현재 시각. */
 export function getCacheUpdatedAt(): string {
   return new Date(listCache?.ts ?? Date.now()).toISOString();
+}
+
+// ── 통계 (계산 결과 캐시) ────────────────────────────────────
+
+let statsCache: { data: PolicyStats; ts: number } | null = null;
+
+/**
+ * 통계 집계 결과를 반환합니다.
+ * 캐시된 전체 목록을 재활용하고, 계산 결과 자체도 30분 캐싱해
+ * 매 요청마다 다시 받거나 다시 계산하지 않습니다.
+ */
+export async function getStats(): Promise<PolicyStats> {
+  if (statsCache && Date.now() - statsCache.ts < CACHE_TTL) {
+    return statsCache.data;
+  }
+  const policies = await getAllPolicies(); // 이미 캐시돼 있으면 즉시 반환
+  const data = computeStats(policies);
+  statsCache = { data, ts: Date.now() };
+  return data;
+}
+
+/** 목업 등 임의 목록으로 통계 계산 (폴백용) */
+export function computeStats(policies: Policy[]): PolicyStats {
+  const tally = (items: string[]): [string, number][] => {
+    const m = new Map<string, number>();
+    items.forEach((k) => m.set(k, (m.get(k) ?? 0) + 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  };
+  return {
+    total: policies.length,
+    active: policies.filter((p) => !isExpired(p)).length,
+    closingSoon: policies.filter((p) => {
+      const d = daysUntilDeadline(p);
+      return d !== null && d >= 0 && d <= 7;
+    }).length,
+    always: policies.filter((p) => daysUntilDeadline(p) === null).length,
+    byCategory: tally(policies.map((p) => p.category)),
+    byRegion: tally(policies.map((p) => p.region)),
+    byTarget: tally(policies.flatMap((p) => p.targets)),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 async function fetchAllPolicies(): Promise<Policy[]> {
