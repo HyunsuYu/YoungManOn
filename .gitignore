@@ -1,9 +1,7 @@
 /node_modules
 /.next
 /out
-
-# 빌드 시점에 API 로 생성되는 정적 데이터 (커밋하지 않음)
-/public/data/policies.json
+/.vercel
 .env.local
 .env*.local
 *.log

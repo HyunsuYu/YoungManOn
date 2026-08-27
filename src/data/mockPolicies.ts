@@ -1,9 +1,9 @@
 import type { Policy } from "@/lib/types";
 
-// 정적 JSON(public/data/policies.json)이 없을 때 사용하는 폴백 샘플 데이터입니다.
-// (로컬에서 데이터 미생성 시 / API 키 미설정 시)
+// 온통청년 API 호출이 실패하거나 API 키가 없을 때 사용하는 폴백 샘플 데이터입니다.
+// (서버 라우트 /api/policies 가 예외 시 이 데이터를 대신 내려줍니다.)
 // 필드 구성은 실제 API 응답을 정규화한 Policy 타입과 동일합니다.
-// 실제 데이터 생성 로직은 scripts/generate-policies.mjs 를 참고하세요.
+// 실제 API 호출·정규화 로직은 src/lib/youthApi.ts 를 참고하세요.
 
 /** 오늘로부터 offset 일 뒤의 날짜를 YYYY-MM-DD 로 반환 (D-Day 데모용) */
 function dateFromToday(offsetDays: number): string {

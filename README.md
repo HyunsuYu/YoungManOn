@@ -4,35 +4,30 @@
 **나이·거주지·소득·신분** 조건으로 필터링하고, 신청 마감일을 **D-Day**로
 보여주는 웹 서비스입니다. (대학 과제 프로젝트)
 
-🔗 **라이브: https://hyunsuyu.github.io/YoungManOn/**
-
 ## 특징
 
-- **실제 공공데이터 연동**: [온통청년](https://www.youthcenter.go.kr) 청년정책 통합 API의
-  실제 정책을 가져와 보여줍니다.
+- **접속 시 실시간 조회**: 유저가 페이지에 접속하면 서버(`/api/policies`)가 그 자리에서
+  [온통청년](https://www.youthcenter.go.kr) 청년정책 통합 API를 호출해 최신 데이터를 내려줍니다.
 - **맞춤 필터**: 나이 / 거주지(시·도) / 소득 / 신분(대학생·취준생·재직자·무직) /
   분류(일자리·주거·교육·복지·문화·참여·권리) / 키워드 검색.
-- **D-Day 정렬·배지**: 마감 임박순 정렬, 3일 이내 빨강 / 7일 이내 주황 배지, 상단 임박 배너.
+- **D-Day 정렬·배지**: 신청 가능 → 상시 → 마감 순 정렬, 3일 이내 빨강 / 7일 이내 주황 배지, 상단 임박 배너.
 
-## 아키텍처 — 정적 사이트 + 빌드 시점 데이터 생성
-
-GitHub Pages는 **서버가 없는 정적 호스팅**이라 실행 중 외부 API 호출이 불가능하고,
-브라우저에서 온통청년 API를 직접 부르면 **CORS**로 막힙니다. 그래서:
+## 아키텍처
 
 ```
-GitHub Actions(빌드 시) → 온통청년 API 호출 → public/data/policies.json 생성
-        → next build (정적 export) → GitHub Pages 배포
-브라우저 → 정적 policies.json fetch → 클라이언트에서 필터링·D-Day 렌더
+브라우저 접속 → /api/policies (Vercel 서버 함수)
+             → 온통청년 API 실시간 호출 + 정규화
+             → JSON 응답 → 클라이언트에서 필터링·D-Day 렌더
 ```
 
-매일 자동 재빌드(cron)로 데이터를 갱신하는 **준실시간** 방식입니다.
-JSON이 없거나 API 키가 없으면 `src/data/mockPolicies.ts` 목업으로 폴백합니다.
+브라우저가 온통청년 API를 직접 호출하면 **CORS**로 막히므로, 서버 라우트가 대신
+호출(서버-서버)합니다. API 키는 서버 환경변수(`YOUTH_API_KEY`)로만 사용되어
+클라이언트에 노출되지 않습니다. API 실패 시 목업 데이터로 폴백합니다.
 
 ## 실행 (로컬)
 
 ```bash
 npm install
-npm run generate   # 온통청년 API → public/data/policies.json 생성 (.env.local 의 키 사용)
 npm run dev        # http://localhost:3000
 ```
 
@@ -42,38 +37,32 @@ npm run dev        # http://localhost:3000
 YOUTH_API_KEY=발급받은_온통청년_API_키
 ```
 
-> `npm run build` 는 `prebuild` 로 자동으로 데이터를 먼저 생성합니다.
+## 배포 (Vercel)
 
-## 배포 (GitHub Pages)
+1. [vercel.com](https://vercel.com) → GitHub 계정으로 로그인
+2. **Add New → Project** → `YoungManOn` 레포 Import (Next.js 자동 인식)
+3. **Environment Variables** 에 추가:
+   - `YOUTH_API_KEY` = 발급받은 온통청년 API 키
+4. **Deploy**
 
-`main` 에 푸시하면 GitHub Actions가 데이터 생성 → 정적 빌드 → 배포를 자동 수행합니다.
-
-**최초 1회 설정 (2가지):**
-
-1. **Settings → Secrets and variables → Actions → New repository secret**
-   - Name: `YOUTH_API_KEY`, Value: 발급받은 온통청년 API 키
-2. **Settings → Pages → Build and deployment → Source → GitHub Actions**
-
-이후 배포 URL: `https://hyunsuyu.github.io/YoungManOn/`
+이후 `main` 에 푸시하면 Vercel이 자동으로 재배포합니다.
 
 ## 구조
 
 ```
-scripts/
-  generate-policies.mjs   # ★ 온통청년 API 호출 + 정규화 → public/data/policies.json
-.github/workflows/
-  deploy.yml              # 데이터 생성 → 빌드 → Pages 배포 (push / 매일 cron)
 src/
   app/
-    page.tsx              # 메인 화면 (정적 JSON fetch + 필터 상태)
+    page.tsx                # 메인 화면 (마운트 시 /api/policies fetch + 필터 상태)
     layout.tsx / globals.css
+    api/policies/route.ts   # ★ 서버 라우트: 온통청년 API 실시간 호출 (동적)
   components/
-    FilterPanel.tsx       # 필터 UI
-    PolicyCard.tsx        # 정책 카드 (D-Day 배지)
+    FilterPanel.tsx         # 필터 UI
+    PolicyCard.tsx          # 정책 카드 (D-Day 배지)
   lib/
-    types.ts              # Policy / PolicyFilter 타입
-    filter.ts             # 필터링 + 마감 임박순 정렬
-    dday.ts               # D-Day 계산
+    youthApi.ts             # ★ 온통청년 API 호출 + 정규화 (서버 전용)
+    types.ts                # Policy / PolicyFilter 타입
+    filter.ts               # 필터링 + 마감 임박순 정렬
+    dday.ts                 # D-Day 계산
   data/
-    mockPolicies.ts       # 폴백 샘플 데이터
+    mockPolicies.ts         # 폴백 샘플 데이터
 ```

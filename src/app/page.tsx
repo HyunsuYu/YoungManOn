@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { Policy, PolicyFilter } from "@/lib/types";
 import { filterPolicies } from "@/lib/filter";
 import { daysUntilDeadline, ddayLabel } from "@/lib/dday";
-import { getMockPolicies } from "@/data/mockPolicies";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 
@@ -21,25 +20,21 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<PolicyFilter>(EMPTY_FILTER);
 
-  // 접속(마운트) 시 정책 목록을 불러옵니다.
-  // 빌드 시점에 온통청년 API 로 생성해 둔 정적 JSON(public/data/policies.json)을 fetch 합니다.
-  // 파일이 없거나(로컬에서 미생성) 실패하면 목업 데이터로 폴백합니다.
+  // 접속(마운트) 시 서버 라우트(/api/policies)를 호출합니다.
+  // 서버가 그 자리에서 온통청년 API를 불러 최신 데이터를 내려줍니다.
   useEffect(() => {
     let alive = true;
     (async () => {
-      const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       try {
-        const res = await fetch(`${base}/data/policies.json`);
-        if (!res.ok) throw new Error("no data file");
+        const res = await fetch("/api/policies");
+        if (!res.ok) throw new Error("불러오기 실패");
         const data = await res.json();
         if (!alive) return;
         setPolicies(data.policies ?? []);
         setUpdatedAt(data.updatedAt ?? new Date().toISOString());
       } catch {
-        // 정적 JSON 이 없으면 목업으로 폴백 (개발 중이거나 API 키 미설정 시)
-        if (!alive) return;
-        setPolicies(getMockPolicies());
-        setUpdatedAt(new Date().toISOString());
+        if (alive)
+          setError("정책 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       } finally {
         if (alive) setLoading(false);
       }
