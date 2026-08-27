@@ -204,6 +204,76 @@ a {
   font-size: 12px;
   color: var(--text-sub);
 }
+.results-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sort-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+/* 마감 임박 배너 */
+.urgent-banner {
+  background: #fff4e6;
+  border: 1px solid #ffd8a8;
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  font-size: 14px;
+  color: #7a4a10;
+}
+.urgent-banner > b {
+  color: #e8590c;
+}
+.urgent-banner .dd {
+  color: #e8590c;
+}
+
+/* 더 보기 / 페이지 정보 */
+.load-more-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+.page-info {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.load-more-btn {
+  padding: 12px 28px;
+  border: 1px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.load-more-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+}
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 .policy-grid {
   display: grid;
@@ -339,4 +409,142 @@ a {
   padding: 32px 24px 48px;
   color: var(--text-sub);
   font-size: 13px;
+}
+
+/* ── 상세 페이지 ──────────────────────────────── */
+.detail-page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+.detail-inner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+}
+.back-link {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 20px;
+}
+.back-link:hover {
+  color: var(--primary);
+}
+.detail-head {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 22px;
+  margin-bottom: 22px;
+}
+.detail-tags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.detail-head h1 {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.35;
+}
+.detail-summary {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+.detail-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 20px;
+  margin-bottom: 26px;
+}
+@media (max-width: 560px) {
+  .detail-facts {
+    grid-template-columns: 1fr;
+  }
+}
+.detail-facts .fact {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.detail-facts .k {
+  font-size: 12px;
+  font-weight: 600;
+  color: #98a2b3;
+}
+.detail-facts .v {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+.detail-section {
+  margin-bottom: 24px;
+}
+.detail-section h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--primary);
+}
+.detail-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap; /* API 원문의 줄바꿈 유지 */
+  word-break: break-word;
+}
+.detail-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 26px;
+}
+.pill {
+  font-size: 13px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.apply-btn {
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+  padding: 14px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 0.12s;
+}
+.apply-btn:hover {
+  background: #2c47e0;
+}
+.ref-btn {
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+.ref-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
 }

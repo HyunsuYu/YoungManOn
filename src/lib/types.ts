@@ -36,6 +36,32 @@ export interface Policy {
   url: string;
   /** 태그 (검색·표시용) */
   tags: string[];
+  /** 조회수 (정렬용) */
+  views?: number;
+  /** 등록일 (ISO, 최신순 정렬용) */
+  registeredAt?: string | null;
+}
+
+/** 정책 상세 (상세 페이지 전용) — 목록보다 많은 필드를 포함 */
+export interface PolicyDetail extends Policy {
+  /** 지원 내용 전문 */
+  supportContent: string;
+  /** 신청 방법 */
+  applyMethod: string;
+  /** 제출 서류 */
+  documents: string;
+  /** 심사 방법 */
+  screening: string;
+  /** 추가 자격 요건 */
+  additionalQualification: string;
+  /** 기타 사항 */
+  etcNotes: string;
+  /** 신청 기간 원문 (예: "20260812 ~ 20260909") */
+  applyPeriodText: string;
+  /** 사업 운영 기간 원문 */
+  businessPeriod: string;
+  /** 참고 사이트 링크들 */
+  refUrls: string[];
 }
 
 /** 사용자가 선택한 필터 조건 */

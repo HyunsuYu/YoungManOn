@@ -1,37 +1,109 @@
-import type { Policy, PolicyTarget } from "./types";
+import type { Policy, PolicyDetail, PolicyTarget } from "./types";
 
 // ─────────────────────────────────────────────────────────────
 //  온통청년(youthcenter.go.kr) 청년정책 통합 API — 서버 전용 데이터 계층
 //
-//  Vercel 서버(Route Handler)에서 "요청 시점"에 호출됩니다.
-//  브라우저가 직접 부르면 CORS 로 막히지만, 서버-서버 호출이라 문제없습니다.
-//  API 키는 process.env.YOUTH_API_KEY (Vercel 환경변수 / 로컬 .env.local) 로만 읽습니다.
+//  Vercel 서버(Route Handler / Server Component)에서만 실행됩니다.
+//  - getAllPolicies(): 전체 정책을 받아 30분간 메모리 캐싱 → 라우트가 그 위에서 검색/필터/페이지네이션
+//  - fetchPolicyById(): 상세 페이지용 단건 조회
+//  API 키는 process.env.YOUTH_API_KEY 로만 사용되어 클라이언트에 노출되지 않습니다.
 // ─────────────────────────────────────────────────────────────
 
 const API = "https://www.youthcenter.go.kr/go/ythip/getPlcy";
 const PAGE_SIZE = 100;
-const MAX_PAGES = 4; // 최대 400건 (필요시 조정)
+const CACHE_TTL = 30 * 60 * 1000; // 30분
+const CONCURRENCY = 6; // 동시 요청 수 (API 부담 완화)
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** 온통청년 API에서 정책 목록을 가져와 Policy[] 로 정규화 (실패 시 예외) */
-export async function fetchPoliciesFromApi(): Promise<Policy[]> {
-  const apiKey = process.env.YOUTH_API_KEY?.trim();
-  if (!apiKey) throw new Error("YOUTH_API_KEY 환경변수가 없습니다.");
+// ── 전체 목록 (메모리 캐시) ──────────────────────────────────
 
-  // 여러 페이지를 병렬로 가져와 응답 지연을 줄입니다.
-  const pages = Array.from({ length: MAX_PAGES }, (_, i) => i + 1);
-  const results = await Promise.all(
-    pages.map((p) => fetchPage(apiKey, p))
-  );
-  return results.flat().map(normalize);
+let listCache: { data: Policy[]; ts: number } | null = null;
+
+/** 전체 정책 목록을 반환합니다. 30분 캐시가 유효하면 즉시 반환. */
+export async function getAllPolicies(): Promise<Policy[]> {
+  if (listCache && Date.now() - listCache.ts < CACHE_TTL) {
+    return listCache.data;
+  }
+  const data = await fetchAllPolicies();
+  listCache = { data, ts: Date.now() };
+  return data;
 }
 
-async function fetchPage(
+/** 캐시가 마지막으로 갱신된 시각(ISO). 없으면 현재 시각. */
+export function getCacheUpdatedAt(): string {
+  return new Date(listCache?.ts ?? Date.now()).toISOString();
+}
+
+async function fetchAllPolicies(): Promise<Policy[]> {
+  const apiKey = requireApiKey();
+
+  // 1페이지로 총 건수 파악 → 전체 페이지 수 계산
+  const first = await fetchRawPage(apiKey, 1);
+  const totalPages = Math.max(1, Math.ceil(first.totCount / PAGE_SIZE));
+
+  const rest: RawPolicy[] = [];
+  // 2페이지부터 동시성 제한을 두고 병렬 수집
+  for (let start = 2; start <= totalPages; start += CONCURRENCY) {
+    const batch = [];
+    for (let p = start; p < start + CONCURRENCY && p <= totalPages; p++) {
+      batch.push(fetchRawPage(apiKey, p).then((r) => r.list));
+    }
+    const results = await Promise.all(batch);
+    results.forEach((l) => rest.push(...l));
+  }
+
+  return [...first.list, ...rest].map(normalizeList);
+}
+
+// ── 단건 상세 조회 (id 별 캐시) ──────────────────────────────
+
+const detailCache = new Map<string, { data: PolicyDetail | null; ts: number }>();
+
+export async function fetchPolicyById(id: string): Promise<PolicyDetail | null> {
+  const cached = detailCache.get(id);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
+
+  const apiKey = requireApiKey();
+  const url = new URL(API);
+  url.searchParams.set("apiKeyNm", apiKey);
+  url.searchParams.set("rtnType", "json");
+  url.searchParams.set("plcyNo", id);
+
+  let data: PolicyDetail | null = null;
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const json = (await res.json()) as YouthApiResponse;
+      const raw = json.result?.youthPolicyList?.[0];
+      if (raw) data = normalizeDetail(raw);
+    } else {
+      console.error(`[fetchPolicyById] HTTP ${res.status} (id=${id})`);
+    }
+  } catch (err) {
+    console.error("[fetchPolicyById] 실패:", err);
+  }
+  // 성공(non-null)일 때만 캐시 — 일시적 실패를 오래 캐싱하지 않도록.
+  if (data) detailCache.set(id, { data, ts: Date.now() });
+  return data;
+}
+
+// ── API 호출 ────────────────────────────────────────────────
+
+function requireApiKey(): string {
+  const apiKey = process.env.YOUTH_API_KEY?.trim();
+  if (!apiKey) throw new Error("YOUTH_API_KEY 환경변수가 없습니다.");
+  return apiKey;
+}
+
+async function fetchRawPage(
   apiKey: string,
   pageNum: number,
   attempt = 1
-): Promise<RawPolicy[]> {
+): Promise<{ list: RawPolicy[]; totCount: number }> {
   const MAX_ATTEMPTS = 4;
   const url = new URL(API);
   url.searchParams.set("apiKeyNm", apiKey);
@@ -39,7 +111,6 @@ async function fetchPage(
   url.searchParams.set("pageSize", String(PAGE_SIZE));
   url.searchParams.set("rtnType", "json");
   try {
-    // 매 요청마다 최신 데이터를 받도록 캐시 사용 안 함
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
       cache: "no-store",
@@ -49,18 +120,19 @@ async function fetchPage(
     if (json.resultCode !== 200) {
       throw new Error(`API 오류: ${json.resultMessage ?? "unknown"}`);
     }
-    return json.result?.youthPolicyList ?? [];
+    return {
+      list: json.result?.youthPolicyList ?? [],
+      totCount: json.result?.pagging?.totCount ?? 0,
+    };
   } catch (err) {
-    // 온통청년 API는 간헐적으로 4xx를 반환하므로 재시도합니다.
     if (attempt >= MAX_ATTEMPTS) throw err;
     await sleep(600 * attempt);
-    return fetchPage(apiKey, pageNum, attempt + 1);
+    return fetchRawPage(apiKey, pageNum, attempt + 1);
   }
 }
 
 // ── 정규화 ─────────────────────────────────────────────────────
 
-/** 시도 행정구역 코드(앞 2자리) → 광역 약칭 */
 const SIDO: Record<string, string> = {
   "11": "서울", "26": "부산", "27": "대구", "28": "인천", "29": "광주",
   "30": "대전", "31": "울산", "36": "세종", "41": "경기", "42": "강원",
@@ -71,14 +143,11 @@ const SIDO: Record<string, string> = {
 function mapRegion(zipCd?: string): string {
   if (!zipCd || !zipCd.trim()) return "전국";
   const sidos = new Set(
-    zipCd
-      .split(",")
-      .map((c) => SIDO[c.trim().slice(0, 2)])
-      .filter(Boolean)
+    zipCd.split(",").map((c) => SIDO[c.trim().slice(0, 2)]).filter(Boolean)
   );
   if (sidos.size === 0) return "전국";
   if (sidos.size === 1) return [...sidos][0];
-  return "전국"; // 여러 시도에 걸치면 사실상 전국
+  return "전국";
 }
 
 function mapCategory(lclsfNm?: string): string {
@@ -97,7 +166,6 @@ function toAge(v?: string): number | null {
 }
 
 function mapIncome(raw: RawPolicy): string {
-  // earnCndSeCd: 0043001=제한없음
   if (raw.earnCndSeCd === "0043001") return "소득 무관";
   const min = Number(raw.earnMinAmt) || 0;
   const max = Number(raw.earnMaxAmt) || 0;
@@ -109,13 +177,7 @@ function mapIncome(raw: RawPolicy): string {
 }
 
 function mapTargets(raw: RawPolicy): PolicyTarget[] {
-  const text = [
-    raw.plcyNm,
-    raw.plcyExplnCn,
-    raw.plcySprtCn,
-    raw.addAplyQlfcCndCn,
-    raw.ptcpPrpTrgtCn,
-  ]
+  const text = [raw.plcyNm, raw.plcyExplnCn, raw.plcySprtCn, raw.addAplyQlfcCndCn, raw.ptcpPrpTrgtCn]
     .filter(Boolean)
     .join(" ");
   const t: PolicyTarget[] = [];
@@ -126,30 +188,45 @@ function mapTargets(raw: RawPolicy): PolicyTarget[] {
   return t.length ? [...new Set(t)] : ["제한없음"];
 }
 
-/** "20260812 ~ 20260909" → 시작/종료 YYYY-MM-DD */
-function parseApplyPeriod(raw: RawPolicy): {
-  start: string | null;
-  end: string | null;
-} {
+function parseApplyPeriod(raw: RawPolicy): { start: string | null; end: string | null } {
   const dates = (raw.aplyYmd ?? "").match(/\d{8}/g);
   if (!dates || dates.length === 0) return { start: null, end: null };
   const fmt = (d: string) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
   return { start: fmt(dates[0]), end: dates[1] ? fmt(dates[1]) : null };
 }
 
-function normalize(raw: RawPolicy): Policy {
-  const { start, end } = parseApplyPeriod(raw);
-  const summary =
+function makeSummary(raw: RawPolicy, maxLen = 140): string {
+  const s =
     raw.plcyExplnCn?.trim() ||
     raw.plcySprtCn?.split("\n")[0]?.trim() ||
     "지원 내용은 상세 페이지를 확인하세요.";
+  return s.length > maxLen ? s.slice(0, maxLen) + "…" : s;
+}
+
+function fmtDate(ymd?: string): string | null {
+  if (!ymd) return null;
+  const d = ymd.replace(/[^\d]/g, "").slice(0, 8);
+  if (d.length !== 8) return null;
+  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
+}
+
+/** 유효한 사업기간 날짜가 하나라도 있을 때만 문자열 생성 */
+function formatBusinessPeriod(bgng?: string, end?: string): string {
+  const a = fmtDate(bgng);
+  const b = fmtDate(end);
+  if (!a && !b) return "";
+  return `${a ?? "미정"} ~ ${b ?? "미정"}`;
+}
+
+/** 목록용 정규화 (요약은 길이 제한) */
+function normalizeList(raw: RawPolicy): Policy {
+  const { start, end } = parseApplyPeriod(raw);
   return {
     id: String(raw.plcyNo),
     title: raw.plcyNm ?? "제목 없음",
-    summary,
+    summary: makeSummary(raw),
     category: mapCategory(raw.lclsfNm),
-    provider:
-      raw.sprvsnInstCdNm?.trim() || raw.rgtrInstCdNm?.trim() || "기관 미상",
+    provider: raw.sprvsnInstCdNm?.trim() || raw.rgtrInstCdNm?.trim() || "기관 미상",
     region: mapRegion(raw.zipCd),
     minAge: toAge(raw.sprtTrgtMinAge),
     maxAge: toAge(raw.sprtTrgtMaxAge),
@@ -158,18 +235,33 @@ function normalize(raw: RawPolicy): Policy {
     targets: mapTargets(raw),
     applyStart: start,
     applyEnd: end,
-    url:
-      raw.aplyUrlAddr?.trim() ||
-      raw.refUrlAddr1?.trim() ||
+    url: raw.aplyUrlAddr?.trim() || raw.refUrlAddr1?.trim() ||
       `https://www.youthcenter.go.kr/youngPlcyUnif/youngPlcyUnifDtl.do?bizId=${raw.plcyNo}`,
-    tags: (raw.plcyKywdNm ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
+    tags: (raw.plcyKywdNm ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+    views: Number(raw.inqCnt) || 0,
+    registeredAt: raw.frstRegDt ?? null,
   };
 }
 
-// ── API 원시 응답 타입(사용하는 필드만) ────────────────────────
+/** 상세용 정규화 (전체 필드 + 요약 원문 유지) */
+function normalizeDetail(raw: RawPolicy): PolicyDetail {
+  const base = normalizeList(raw);
+  return {
+    ...base,
+    summary: raw.plcyExplnCn?.trim() || base.summary, // 상세는 요약 원문
+    supportContent: raw.plcySprtCn?.trim() || "",
+    applyMethod: raw.plcyAplyMthdCn?.trim() || "",
+    documents: raw.sbmsnDcmntCn?.trim() || "",
+    screening: raw.srngMthdCn?.trim() || "",
+    additionalQualification: raw.addAplyQlfcCndCn?.trim() || "",
+    etcNotes: raw.etcMttrCn?.trim() || "",
+    applyPeriodText: raw.aplyYmd?.trim() || "",
+    businessPeriod: formatBusinessPeriod(raw.bizPrdBgngYmd, raw.bizPrdEndYmd),
+    refUrls: [raw.refUrlAddr1, raw.refUrlAddr2].map((u) => u?.trim()).filter(Boolean) as string[],
+  };
+}
+
+// ── API 원시 응답 타입 (사용하는 필드만) ────────────────────────
 interface RawPolicy {
   plcyNo: string;
   plcyNm?: string;
@@ -190,11 +282,23 @@ interface RawPolicy {
   aplyYmd?: string;
   aplyUrlAddr?: string;
   refUrlAddr1?: string;
+  refUrlAddr2?: string;
   plcyKywdNm?: string;
+  inqCnt?: string;
+  frstRegDt?: string;
+  plcyAplyMthdCn?: string;
+  sbmsnDcmntCn?: string;
+  srngMthdCn?: string;
+  etcMttrCn?: string;
+  bizPrdBgngYmd?: string;
+  bizPrdEndYmd?: string;
 }
 
 interface YouthApiResponse {
-  resultCode: number;
+  resultCode?: number;
   resultMessage?: string;
-  result?: { youthPolicyList?: RawPolicy[] };
+  result?: {
+    pagging?: { totCount?: number };
+    youthPolicyList?: RawPolicy[];
+  };
 }

@@ -51,12 +51,26 @@ function matches(policy: Policy, f: PolicyFilter): boolean {
   return true;
 }
 
-/** 필터 적용 + 마감 임박순 정렬 */
-export function filterPolicies(policies: Policy[], f: PolicyFilter): Policy[] {
-  return policies
-    .filter((p) => matches(p, f))
-    .sort((a, b) => sortByDeadline(a, b));
+export type SortOption = "deadline" | "latest" | "views";
+
+/** 필터 적용 + 정렬 (기본: 마감 임박순) */
+export function filterPolicies(
+  policies: Policy[],
+  f: PolicyFilter,
+  sort: SortOption = "deadline"
+): Policy[] {
+  const filtered = policies.filter((p) => matches(p, f));
+  return filtered.sort(sortComparators[sort]);
 }
+
+const sortComparators: Record<SortOption, (a: Policy, b: Policy) => number> = {
+  deadline: sortByDeadline,
+  // 최신 등록순 (registeredAt 내림차순)
+  latest: (a, b) =>
+    new Date(b.registeredAt ?? 0).getTime() - new Date(a.registeredAt ?? 0).getTime(),
+  // 조회수 많은 순
+  views: (a, b) => (b.views ?? 0) - (a.views ?? 0),
+};
 
 // 정렬 우선순위 그룹: 마감 임박 정책(0) → 상시 접수(1) → 마감된 정책(2)
 function rankGroup(p: Policy): number {

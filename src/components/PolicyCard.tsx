@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Policy } from "@/lib/types";
 import { ddayLabel, daysUntilDeadline } from "@/lib/dday";
 
@@ -53,14 +54,9 @@ export default function PolicyCard({ policy }: { policy: Policy }) {
         </div>
       </div>
 
-      <a
-        className="card-link"
-        href={policy.url}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <Link className="card-link" href={`/policy/${policy.id}`}>
         자세히 보기 →
-      </a>
+      </Link>
     </article>
   );
 }
