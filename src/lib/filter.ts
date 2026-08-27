@@ -19,6 +19,9 @@ function matches(policy: Policy, f: PolicyFilter): boolean {
     if (f.incomePercent > policy.incomeMaxPercent) return false;
   }
 
+  // 소득 무관 정책만 보기
+  if (f.incomeFreeOnly && policy.incomeCondition !== "소득 무관") return false;
+
   // 대상 유형: "제한없음" 정책은 항상 통과
   if (f.target) {
     const ok =

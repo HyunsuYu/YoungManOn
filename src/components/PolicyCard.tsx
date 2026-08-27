@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import type { Policy } from "@/lib/types";
 import { ddayLabel, daysUntilDeadline } from "@/lib/dday";
+import BookmarkButton from "./BookmarkButton";
 
 /** D-Day 남은 일수에 따라 배지 색상 클래스를 정합니다. */
 function ddayClass(policy: Policy): string {
@@ -25,7 +28,10 @@ export default function PolicyCard({ policy }: { policy: Policy }) {
     <article className="policy-card">
       <div className="card-top">
         <span className="category-tag">{policy.category}</span>
-        <span className={`dday ${ddayClass(policy)}`}>{ddayLabel(policy)}</span>
+        <div className="card-top-right">
+          <span className={`dday ${ddayClass(policy)}`}>{ddayLabel(policy)}</span>
+          <BookmarkButton policy={policy} />
+        </div>
       </div>
 
       <h3>{policy.title}</h3>

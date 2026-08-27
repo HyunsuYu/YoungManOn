@@ -1,55 +1,108 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Policy, PolicyFilter } from "@/lib/types";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { Policy, PolicyFilter, PolicyTarget } from "@/lib/types";
 import type { SortOption } from "@/lib/filter";
 import { daysUntilDeadline, ddayLabel } from "@/lib/dday";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 
-const EMPTY_FILTER: PolicyFilter = {
-  category: "전체",
-  region: "전체",
-  hideExpired: true,
-};
 const PAGE_SIZE = 20;
-
+const TARGETS: PolicyTarget[] = ["대학생", "취업준비생", "재직자", "무직"];
+const SORTS: SortOption[] = ["deadline", "latest", "views"];
 const SORT_LABELS: Record<SortOption, string> = {
   deadline: "마감 임박순",
   latest: "최신 등록순",
   views: "조회수순",
 };
 
-/** 필터+정렬+페이지 → 쿼리스트링 */
-function buildQuery(f: PolicyFilter, sort: SortOption, page: number): string {
+const DEFAULT_FILTER: PolicyFilter = {
+  category: "전체",
+  region: "전체",
+  hideExpired: true,
+};
+
+/** URL 쿼리 → 필터/정렬 */
+function readFromParams(sp: URLSearchParams): {
+  filter: PolicyFilter;
+  sort: SortOption;
+} {
+  const target = sp.get("target") as PolicyTarget;
+  const sort = sp.get("sort") as SortOption;
+  return {
+    filter: {
+      keyword: sp.get("keyword") || undefined,
+      region: sp.get("region") || "전체",
+      category: sp.get("category") || "전체",
+      age: sp.get("age") ? Number(sp.get("age")) : undefined,
+      target: TARGETS.includes(target) ? target : undefined,
+      incomeFreeOnly: sp.get("incomeFreeOnly") === "true",
+      hideExpired: sp.get("hideExpired") !== "false",
+    },
+    sort: SORTS.includes(sort) ? sort : "deadline",
+  };
+}
+
+/** 필터/정렬 → 쿼리 파라미터 (기본값은 생략해 URL 간결화) */
+function toParams(f: PolicyFilter, sort: SortOption, withPage?: number): URLSearchParams {
   const p = new URLSearchParams();
   if (f.keyword?.trim()) p.set("keyword", f.keyword.trim());
   if (f.region && f.region !== "전체") p.set("region", f.region);
   if (f.category && f.category !== "전체") p.set("category", f.category);
   if (f.age != null) p.set("age", String(f.age));
-  if (f.incomePercent != null) p.set("income", String(f.incomePercent));
   if (f.target) p.set("target", f.target);
-  p.set("hideExpired", f.hideExpired ? "true" : "false");
-  p.set("sort", sort);
-  p.set("page", String(page));
-  p.set("pageSize", String(PAGE_SIZE));
-  return p.toString();
+  if (f.incomeFreeOnly) p.set("incomeFreeOnly", "true");
+  if (!f.hideExpired) p.set("hideExpired", "false");
+  if (sort !== "deadline") p.set("sort", sort);
+  if (withPage != null) {
+    p.set("page", String(withPage));
+    p.set("pageSize", String(PAGE_SIZE));
+  }
+  return p;
 }
 
-export default function HomePage() {
+function SkeletonGrid() {
+  return (
+    <div className="policy-grid">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div className="skeleton-card" key={i}>
+          <div className="sk-line sk-tag" />
+          <div className="sk-line sk-title" />
+          <div className="sk-line sk-text" />
+          <div className="sk-line sk-text short" />
+          <div className="sk-meta" />
+          <div className="sk-line sk-btn" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HomeContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // URL 로부터 초기 상태 (최초 1회)
+  const initial = useMemo(
+    () => readFromParams(new URLSearchParams(searchParams.toString())),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const [filter, setFilter] = useState<PolicyFilter>(initial.filter);
+  const [sort, setSort] = useState<SortOption>(initial.sort);
+
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // 최초/필터 변경 로딩
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [filter, setFilter] = useState<PolicyFilter>(EMPTY_FILTER);
-  const [sort, setSort] = useState<SortOption>("deadline");
-
-  // 최신 요청만 반영하기 위한 토큰 (경쟁 상태 방지)
   const reqId = useRef(0);
 
   const fetchPage = useCallback(
@@ -58,10 +111,11 @@ export default function HomePage() {
       if (replace) setLoading(true);
       else setLoadingMore(true);
       try {
-        const res = await fetch(`/api/policies?${buildQuery(filter, sort, targetPage)}`);
+        const qs = toParams(filter, sort, targetPage).toString();
+        const res = await fetch(`/api/policies?${qs}`);
         if (!res.ok) throw new Error("불러오기 실패");
         const data = await res.json();
-        if (myReq !== reqId.current) return; // 더 최신 요청이 있으면 폐기
+        if (myReq !== reqId.current) return;
         setTotalCount(data.totalCount ?? 0);
         setTotalPages(data.totalPages ?? 1);
         setUpdatedAt(data.updatedAt ?? null);
@@ -72,7 +126,7 @@ export default function HomePage() {
         setError(null);
       } catch {
         if (myReq === reqId.current)
-          setError("정책 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+          setError("정책 데이터를 불러오지 못했습니다.");
       } finally {
         if (myReq === reqId.current) {
           setLoading(false);
@@ -83,17 +137,21 @@ export default function HomePage() {
     [filter, sort]
   );
 
-  // 필터/정렬이 바뀌면 1페이지부터 다시 로드 (키워드는 디바운스)
+  // 필터/정렬 변경 → URL 동기화 + 1페이지 재조회 (디바운스)
   useEffect(() => {
-    const t = setTimeout(() => fetchPage(1, true), 250);
+    const t = setTimeout(() => {
+      const qs = toParams(filter, sort).toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      fetchPage(1, true);
+    }, 250);
     return () => clearTimeout(t);
-  }, [fetchPage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, sort]);
 
   const loadMore = () => {
     if (page < totalPages && !loadingMore) fetchPage(page + 1, false);
   };
 
-  // 마감 임박(D-7 이내) — 현재 로드된 목록 기준 상단 배너
   const urgent = useMemo(
     () =>
       policies
@@ -122,7 +180,7 @@ export default function HomePage() {
         <FilterPanel
           filter={filter}
           onChange={setFilter}
-          onReset={() => setFilter(EMPTY_FILTER)}
+          onReset={() => setFilter(DEFAULT_FILTER)}
         />
 
         <main>
@@ -137,7 +195,7 @@ export default function HomePage() {
                 onChange={(e) => setSort(e.target.value as SortOption)}
                 aria-label="정렬"
               >
-                {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
+                {SORTS.map((s) => (
                   <option key={s} value={s}>
                     {SORT_LABELS[s]}
                   </option>
@@ -151,7 +209,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {!loading && urgent.length > 0 && (
+          {!loading && !error && urgent.length > 0 && (
             <div className="urgent-banner">
               <b>⏰ 마감 임박!</b>{" "}
               {urgent.map((p, i) => (
@@ -164,14 +222,14 @@ export default function HomePage() {
           )}
 
           {loading ? (
-            <div className="state-box">
-              <div className="spinner" />
-              청년정책을 불러오는 중입니다…
-            </div>
+            <SkeletonGrid />
           ) : error ? (
             <div className="state-box">
               <span className="emoji">⚠️</span>
-              {error}
+              <p style={{ marginBottom: 16 }}>{error}</p>
+              <button className="load-more-btn" onClick={() => fetchPage(1, true)}>
+                다시 시도
+              </button>
             </div>
           ) : policies.length === 0 ? (
             <div className="state-box">
@@ -185,7 +243,6 @@ export default function HomePage() {
                   <PolicyCard key={p.id} policy={p} />
                 ))}
               </div>
-
               <div className="load-more-wrap">
                 <span className="page-info">
                   전체 {totalCount}건 중 {policies.length}건 표시
@@ -210,5 +267,13 @@ export default function HomePage() {
         대학 과제 프로젝트
       </footer>
     </>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div className="layout"><SkeletonGrid /></div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

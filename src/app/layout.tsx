@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { BookmarkProvider } from "@/components/BookmarkProvider";
+import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
   title: "청년ON | 흩어진 청년 혜택을 한 곳에서",
@@ -14,7 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        <BookmarkProvider>
+          <SiteNav />
+          {children}
+        </BookmarkProvider>
+      </body>
     </html>
   );
 }

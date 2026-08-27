@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     target: TARGETS.includes(sp.get("target") as PolicyTarget)
       ? (sp.get("target") as PolicyTarget)
       : undefined,
+    incomeFreeOnly: sp.get("incomeFreeOnly") === "true",
     hideExpired: sp.get("hideExpired") !== "false", // 기본 true
   };
 

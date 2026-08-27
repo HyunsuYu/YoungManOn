@@ -70,10 +70,20 @@ export interface PolicyFilter {
   region?: string;
   /** 본인 소득 (중위소득 %) — 이 값 이하 조건의 정책을 통과 */
   incomePercent?: number;
+  /** 소득 조건이 없는(소득 무관) 정책만 보기 */
+  incomeFreeOnly?: boolean;
   target?: PolicyTarget;
   category?: string;
   /** 제목/요약/태그 텍스트 검색 */
   keyword?: string;
   /** 마감이 지난 정책 숨기기 */
   hideExpired?: boolean;
+}
+
+/** localStorage 에 저장하는 사용자 프로필 (맞춤 필터용) */
+export interface UserProfile {
+  age?: number;
+  region?: string;
+  target?: PolicyTarget;
+  incomeFreeOnly?: boolean;
 }

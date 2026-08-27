@@ -43,11 +43,19 @@ async function fetchAllPolicies(): Promise<Policy[]> {
   const totalPages = Math.max(1, Math.ceil(first.totCount / PAGE_SIZE));
 
   const rest: RawPolicy[] = [];
-  // 2페이지부터 동시성 제한을 두고 병렬 수집
+  // 2페이지부터 동시성 제한을 두고 병렬 수집.
+  // 한 페이지가 재시도까지 실패해도 전체가 무너지지 않도록 개별 실패는 빈 배열로 처리.
   for (let start = 2; start <= totalPages; start += CONCURRENCY) {
     const batch = [];
     for (let p = start; p < start + CONCURRENCY && p <= totalPages; p++) {
-      batch.push(fetchRawPage(apiKey, p).then((r) => r.list));
+      batch.push(
+        fetchRawPage(apiKey, p)
+          .then((r) => r.list)
+          .catch((err) => {
+            console.error(`[fetchAllPolicies] page ${p} 스킵:`, err.message);
+            return [] as RawPolicy[];
+          })
+      );
     }
     const results = await Promise.all(batch);
     results.forEach((l) => rest.push(...l));

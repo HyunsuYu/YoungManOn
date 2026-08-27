@@ -548,3 +548,324 @@ a {
   border-color: var(--primary);
   color: var(--primary);
 }
+
+/* ── 상단 네비게이션 ──────────────────────────── */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.site-nav-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+.brand span {
+  color: var(--primary);
+}
+.nav-links {
+  display: flex;
+  gap: 6px;
+}
+.nav-links a {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+  transition: all 0.12s;
+}
+.nav-links a:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+.nav-links a.on {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.nav-badge {
+  margin-left: 6px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+}
+
+/* ── 프로필 박스 ──────────────────────────────── */
+.profile-box {
+  background: var(--primary-soft);
+  border: 1px solid #dbe0ff;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 18px;
+}
+.profile-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--text);
+}
+.profile-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mini-btn {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-sub);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mini-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.mini-btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.mini-btn.primary:hover {
+  background: #2c47e0;
+  color: #fff;
+}
+.mini-btn.ghost {
+  border-color: transparent;
+}
+.mini-btn.full {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+}
+
+/* ── 나이 슬라이더 ────────────────────────────── */
+.age-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.age-any {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.age-slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+.age-slider input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.age-slider input[type="range"]:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.age-value {
+  min-width: 56px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* ── 북마크 버튼 ──────────────────────────────── */
+.card-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bookmark-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 1;
+  color: #f0a500;
+  padding: 0;
+  transition: transform 0.1s;
+}
+.bookmark-btn.sm {
+  font-size: 20px;
+}
+.bookmark-btn.lg {
+  font-size: 28px;
+}
+.bookmark-btn:hover {
+  transform: scale(1.15);
+}
+.bookmark-btn:not(.active) {
+  color: #c0c6d0;
+}
+
+.detail-head-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ── 스켈레톤 로딩 ────────────────────────────── */
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.sk-line {
+  background: linear-gradient(90deg, #eef0f4 25%, #e3e6ec 37%, #eef0f4 63%);
+  background-size: 400% 100%;
+  border-radius: 6px;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+.sk-tag { width: 60px; height: 20px; margin-bottom: 14px; }
+.sk-title { width: 80%; height: 20px; margin-bottom: 12px; }
+.sk-text { width: 100%; height: 13px; margin-bottom: 7px; }
+.sk-text.short { width: 55%; }
+.sk-meta { height: 90px; margin: 16px 0; border-top: 1px dashed var(--border); }
+.sk-btn { width: 100%; height: 40px; margin-top: 6px; }
+
+/* ── 단순 페이지 (통계/북마크) ────────────────── */
+.simple-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+.simple-head {
+  margin-bottom: 28px;
+}
+.simple-head h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.simple-head p {
+  margin: 0;
+  color: var(--text-sub);
+  font-size: 15px;
+}
+
+/* ── 통계 대시보드 ────────────────────────────── */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+@media (max-width: 620px) {
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stat-num {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+.stat-num.accent { color: var(--primary); }
+.stat-num.warn { color: #e8590c; }
+.stat-cap {
+  font-size: 13px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+.stat-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.stat-section h2 {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 56px;
+  align-items: center;
+  gap: 12px;
+}
+.bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bar-track {
+  background: var(--bg);
+  border-radius: 999px;
+  height: 22px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #6b86ff);
+  border-radius: 999px;
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+.bar-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-align: right;
+}

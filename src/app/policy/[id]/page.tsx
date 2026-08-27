@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { fetchPolicyById } from "@/lib/youthApi";
 import { ddayLabel, daysUntilDeadline } from "@/lib/dday";
 import type { PolicyDetail } from "@/lib/types";
+import BookmarkButton from "@/components/BookmarkButton";
 
 // 상세는 요청 시점에 단건 조회 (30분 캐시)
 export const dynamic = "force-dynamic";
@@ -68,11 +69,14 @@ export default async function PolicyDetailPage({
         </Link>
 
         <div className="detail-head">
-          <div className="detail-tags">
-            <span className="category-tag">{policy.category}</span>
-            <span className={`dday ${ddayClass(policy)}`}>
-              {ddayLabel(policy)}
-            </span>
+          <div className="detail-head-top">
+            <div className="detail-tags">
+              <span className="category-tag">{policy.category}</span>
+              <span className={`dday ${ddayClass(policy)}`}>
+                {ddayLabel(policy)}
+              </span>
+            </div>
+            <BookmarkButton policy={policy} size="lg" />
           </div>
           <h1>{policy.title}</h1>
           <p className="detail-summary">{policy.summary}</p>
