@@ -11,6 +11,8 @@
 - **맞춤 필터**: 나이 / 거주지(시·도) / 소득 / 신분(대학생·취준생·재직자·무직) /
   분류(일자리·주거·교육·복지·문화·참여·권리) / 키워드 검색.
 - **D-Day 정렬·배지**: 신청 가능 → 상시 → 마감 순 정렬, 3일 이내 빨강 / 7일 이내 주황 배지, 상단 임박 배너.
+- **AI 자연어 검색**: "서울 사는 26살 취준생인데 월세 지원 찾고 있어" 처럼 문장으로 말하면
+  Claude(claude-opus-5)가 나이·지역·분류·신분·키워드 필터로 변환해 적용합니다.
 
 ## 아키텍처
 
@@ -35,6 +37,18 @@ npm run dev        # http://localhost:3000
 
 ```
 YOUTH_API_KEY=발급받은_온통청년_API_키
+ANTHROPIC_API_KEY=발급받은_Claude_API_키
+```
+
+`ANTHROPIC_API_KEY` 가 없으면 AI 검색만 비활성화되고 나머지는 정상 동작합니다.
+
+### 기관 로고 캐시
+
+정책 원문 사이트의 로고를 미리 내려받아 `public/logos/` 에 캐싱해 사용합니다
+(렌더링 시 외부 요청 없음). 갱신이 필요하면:
+
+```bash
+npm run logos
 ```
 
 ## 배포 (Vercel)
@@ -43,6 +57,7 @@ YOUTH_API_KEY=발급받은_온통청년_API_키
 2. **Add New → Project** → `YoungManOn` 레포 Import (Next.js 자동 인식)
 3. **Environment Variables** 에 추가:
    - `YOUTH_API_KEY` = 발급받은 온통청년 API 키
+   - `ANTHROPIC_API_KEY` = 발급받은 Claude API 키 (AI 검색용)
 4. **Deploy**
 
 이후 `main` 에 푸시하면 Vercel이 자동으로 재배포합니다.

@@ -85,10 +85,14 @@ export default function PolicyImage({ policy }: { policy: Policy }) {
     );
   }
 
-  // ② 캐시된 기관 로고 (중앙 정렬, 확대하지 않음)
+  // ② 캐시된 기관 로고
+  //   파비콘은 작은 정사각 이미지라 그대로 16:9 로 늘리면 깨지므로,
+  //   같은 로고를 꽉 채워 크롭·블러 처리한 배경 위에 선명한 로고를 얹습니다.
   if (logo) {
     return (
       <div className="card-image logo-mode">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="logo-backdrop" src={logo} alt="" aria-hidden="true" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           ref={imgRef}
@@ -98,7 +102,6 @@ export default function PolicyImage({ policy }: { policy: Policy }) {
           loading="lazy"
           onError={() => setLogoFailed(true)}
         />
-        <span className="logo-provider">{policy.provider}</span>
       </div>
     );
   }

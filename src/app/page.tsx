@@ -9,6 +9,7 @@ import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 import BannerCarousel from "@/components/BannerCarousel";
 import PolicyDetailPanel from "@/components/PolicyDetailPanel";
+import AiSearchBar from "@/components/AiSearchBar";
 
 const PAGE_SIZE = 20;
 const TARGETS: PolicyTarget[] = ["대학생", "취업준비생", "재직자", "무직"];
@@ -178,6 +179,13 @@ function HomeContent() {
         />
 
         <main>
+          <AiSearchBar
+            onApply={(patch) => {
+              setSelected(null);
+              setFilter((f) => ({ ...f, ...patch }));
+            }}
+          />
+
           <div className="results-head">
             <div className="count">
               조건에 맞는 정책 <b>{loading ? "…" : totalCount}</b>건

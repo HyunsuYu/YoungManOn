@@ -10,7 +10,7 @@ const REGIONS = [
 
 const CATEGORIES = ["전체", "일자리", "주거", "교육", "복지·문화", "참여·권리"];
 const TARGETS: PolicyTarget[] = ["대학생", "취업준비생", "재직자", "무직"];
-const AGE_MIN = 15;
+const AGE_MIN = 19; // 타겟 유저층: 만 19~39세
 const AGE_MAX = 39;
 
 interface Props {

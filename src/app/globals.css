@@ -1470,31 +1470,143 @@ a {
 }
 .sk-img { width: 100%; aspect-ratio: 16 / 9; margin-bottom: 14px; }
 
-/* 기관 로고 모드 (캐시된 로고를 중앙에 표시) */
+/* 기관 로고 모드: 로고를 16:9 로 꽉 채워 크롭한 배경 + 선명한 로고 */
 .card-image.logo-mode {
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
-  padding: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.logo-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* FHD(16:9) 비율로 크롭 */
+  transform: scale(1.25);
+  filter: blur(16px) saturate(1.35);
+  opacity: 0.5;
+}
+:root[data-theme="dark"] .logo-backdrop {
+  opacity: 0.38;
 }
 .card-logo {
-  max-width: 96px;
-  max-height: 56px;
+  position: relative;
+  z-index: 1;
+  max-width: 62%;
+  max-height: 64%;
   width: auto;
   height: auto;
   object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.18));
 }
-.logo-provider {
+
+/* ── AI 자연어 검색 ───────────────────────────── */
+.ai-search {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+.ai-search-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.ai-badge {
+  background: var(--primary);
+  color: #fff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 3px;
+  letter-spacing: 0.2px;
+}
+.ai-search-head p {
+  margin: 0;
+  font-size: 13px;
   color: var(--text-sub);
-  text-align: center;
-  max-width: 90%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+.ai-search-form {
+  display: flex;
+  gap: 8px;
+}
+.ai-search-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+}
+.ai-search-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.ai-search-form button {
+  padding: 12px 22px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
   white-space: nowrap;
+  transition: filter 0.12s;
+}
+.ai-search-form button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+.ai-search-form button:disabled,
+.ai-search-form input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.ai-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+.ai-example {
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-sub);
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.ai-example:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  border-style: solid;
+}
+.ai-result,
+.ai-error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.ai-result {
+  color: var(--accent);
+}
+.ai-error {
+  color: var(--dday-urgent);
+}
+@media (max-width: 560px) {
+  .ai-search-form {
+    flex-direction: column;
+  }
 }
