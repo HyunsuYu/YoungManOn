@@ -21,7 +21,18 @@ export default function SiteNav() {
   return (
     <header className="site-nav">
       <div className="site-nav-inner">
-        <Link href="/" className="brand" aria-label="청년ON 홈">
+        <Link
+          href="/"
+          className="brand"
+          aria-label="청년ON 홈"
+          onClick={(e) => {
+            // 이미 홈이고 필터(쿼리)가 걸려 있으면, 상태까지 초기화된 첫 화면으로
+            if (pathname === "/" && window.location.search) {
+              e.preventDefault();
+              window.location.assign("/");
+            }
+          }}
+        >
           <span className="brand-mark" aria-hidden="true">
             ⏻
           </span>

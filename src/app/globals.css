@@ -1610,3 +1610,67 @@ a {
     flex-direction: column;
   }
 }
+
+/* ── 통계 AI 해설 ─────────────────────────────── */
+.ai-analysis {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.ai-analysis-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.ai-analysis-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.ai-analysis-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.ai-analysis-hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.ai-analysis-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.insight h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+}
+.insight p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+}
+.ai-advice {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  background: var(--primary-soft);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}

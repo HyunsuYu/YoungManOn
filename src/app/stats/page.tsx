@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { PolicyStats } from "@/lib/types";
+import type { StatsAnalysis } from "@/lib/statsAnalysis";
 
 function BarList({ data, max }: { data: [string, number][]; max: number }) {
   return (
@@ -49,6 +50,8 @@ function StatSkeleton() {
 export default function StatsPage() {
   const [stats, setStats] = useState<PolicyStats | null>(null);
   const [error, setError] = useState(false);
+  const [analysis, setAnalysis] = useState<StatsAnalysis | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -62,6 +65,20 @@ export default function StatsPage() {
         if (alive) setError(true);
       }
     })();
+
+    // AI 해설은 통계와 병렬로 불러옵니다(실패해도 통계는 정상 표시).
+    (async () => {
+      try {
+        const res = await fetch("/api/stats/analysis");
+        const data = await res.json();
+        if (!alive) return;
+        if (!res.ok) setAnalysisError(data?.error ?? "분석을 불러오지 못했습니다.");
+        else setAnalysis(data);
+      } catch {
+        if (alive) setAnalysisError("분석을 불러오지 못했습니다.");
+      }
+    })();
+
     return () => {
       alive = false;
     };
@@ -105,6 +122,39 @@ export default function StatsPage() {
               <span className="stat-cap">상시 접수</span>
             </div>
           </div>
+
+          <section className="ai-analysis">
+            <div className="ai-analysis-head">
+              <span className="ai-badge">AI 분석</span>
+              {analysis && <h2>{analysis.headline}</h2>}
+            </div>
+
+            {analysisError ? (
+              <p className="ai-analysis-error">{analysisError}</p>
+            ) : !analysis ? (
+              <div className="ai-analysis-loading">
+                <div className="sk-line" style={{ height: 16, width: "70%" }} />
+                <div className="sk-line" style={{ height: 13, width: "100%" }} />
+                <div className="sk-line" style={{ height: 13, width: "92%" }} />
+                <div className="sk-line" style={{ height: 13, width: "60%" }} />
+                <p className="ai-analysis-hint">AI가 통계를 해설하는 중입니다…</p>
+              </div>
+            ) : (
+              <>
+                <div className="insight-grid">
+                  {analysis.insights.map((it) => (
+                    <div className="insight" key={it.title}>
+                      <h3>{it.title}</h3>
+                      <p>{it.body}</p>
+                    </div>
+                  ))}
+                </div>
+                {analysis.advice && (
+                  <p className="ai-advice">💡 {analysis.advice}</p>
+                )}
+              </>
+            )}
+          </section>
 
           <section className="stat-section">
             <h2>분류별 정책 수</h2>
