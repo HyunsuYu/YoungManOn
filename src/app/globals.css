@@ -1432,7 +1432,12 @@ a {
 }
 .detail-panel .detail-head h1 {
   font-size: clamp(20px, 2.2vw, 26px);
-  padding-right: 44px;
+}
+/* 인라인 패널에서는 우측 상단을 닫기(✕) 버튼이 차지하므로
+   관심(☆) 버튼과 제목이 겹치지 않도록 오른쪽 여백을 확보 */
+.detail-panel .detail-head-top,
+.detail-panel .detail-head h1 {
+  padding-right: 52px;
 }
 .detail-panel-state {
   text-align: center;
