@@ -1469,3 +1469,32 @@ a {
   }
 }
 .sk-img { width: 100%; aspect-ratio: 16 / 9; margin-bottom: 14px; }
+
+/* 기관 로고 모드 (캐시된 로고를 중앙에 표시) */
+.card-image.logo-mode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(160deg, var(--surface) 0%, var(--bg) 100%);
+  padding: 14px;
+}
+.card-logo {
+  max-width: 96px;
+  max-height: 56px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+}
+.logo-provider {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
