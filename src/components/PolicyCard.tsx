@@ -1,18 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import type { Policy } from "@/lib/types";
 import { ddayLabel, daysUntilDeadline } from "@/lib/dday";
 import BookmarkButton from "./BookmarkButton";
+import PolicyImage from "./PolicyImage";
 
-/** D-Day 남은 일수에 따라 배지 색상 클래스를 정합니다. */
 function ddayClass(policy: Policy): string {
   const d = daysUntilDeadline(policy);
-  if (d === null) return "none"; // 상시
-  if (d < 0) return "expired"; // 마감
-  if (d <= 3) return "urgent"; // 3일 이내: 빨강
-  if (d <= 7) return "soon"; // 일주일 이내: 주황
-  return "normal"; // 여유: 초록
+  if (d === null) return "none";
+  if (d < 0) return "expired";
+  if (d <= 3) return "urgent";
+  if (d <= 7) return "soon";
+  return "normal";
 }
 
 function ageText(policy: Policy): string {
@@ -23,20 +22,43 @@ function ageText(policy: Policy): string {
   return `만 ${policy.maxAge}세 이하`;
 }
 
-export default function PolicyCard({ policy }: { policy: Policy }) {
+interface Props {
+  policy: Policy;
+  onSelect: (policy: Policy) => void;
+  active?: boolean;
+}
+
+export default function PolicyCard({ policy, onSelect, active }: Props) {
   return (
-    <article className="policy-card">
-      <div className="card-top">
-        <span className="category-tag">{policy.category}</span>
-        <div className="card-top-right">
-          <span className={`dday ${ddayClass(policy)}`}>{ddayLabel(policy)}</span>
-          <BookmarkButton policy={policy} />
-        </div>
+    <article
+      className={`policy-card ${active ? "active" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={active}
+      onClick={() => onSelect(policy)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(policy);
+        }
+      }}
+    >
+      {/* 1) 제목 */}
+      <div className="card-head">
+        <h3>{policy.title}</h3>
+        <BookmarkButton policy={policy} />
       </div>
 
-      <h3>{policy.title}</h3>
-      <p className="summary">{policy.summary}</p>
+      {/* 2) 공고 이미지 (없으면 플레이스홀더/대체) + 분류·D-Day 오버레이 */}
+      <div className="card-image-wrap">
+        <PolicyImage policy={policy} />
+        <span className="category-tag overlay">{policy.category}</span>
+        <span className={`dday overlay ${ddayClass(policy)}`}>
+          {ddayLabel(policy)}
+        </span>
+      </div>
 
+      {/* 3) 설명 (주관/지역/나이/소득/마감) */}
       <div className="policy-meta">
         <div className="row">
           <span>주관</span>
@@ -60,9 +82,16 @@ export default function PolicyCard({ policy }: { policy: Policy }) {
         </div>
       </div>
 
-      <Link className="card-link" href={`/policy/${policy.id}`}>
-        자세히 보기 →
-      </Link>
+      {/* 공고 바로가기 (외부 사이트) — 카드 클릭(상세 패널)과 분리 */}
+      <a
+        className="card-link"
+        href={policy.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        공고 바로가기 →
+      </a>
     </article>
   );
 }

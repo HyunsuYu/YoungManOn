@@ -34,6 +34,8 @@ export interface Policy {
   applyEnd: string | null;
   /** 원문/신청 링크 */
   url: string;
+  /** 공고 대표 이미지 URL (소스에 있으면 사용, 없으면 null → Placeholder 대체) */
+  imageUrl?: string | null;
   /** 태그 (검색·표시용) */
   tags: string[];
   /** 조회수 (정렬용) */

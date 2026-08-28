@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useBookmarks } from "@/components/BookmarkProvider";
 import PolicyCard from "@/components/PolicyCard";
+import PolicyDetailPanel from "@/components/PolicyDetailPanel";
 import { filterPolicies } from "@/lib/filter";
+import type { Policy } from "@/lib/types";
 
 export default function BookmarksPage() {
   const { bookmarks, ready } = useBookmarks();
+  const [selected, setSelected] = useState<Policy | null>(null);
 
   // 마감 임박순 정렬 (필터 없이)
   const sorted = useMemo(
@@ -39,9 +42,20 @@ export default function BookmarksPage() {
           <p className="page-info" style={{ marginBottom: 16 }}>
             총 {sorted.length}건
           </p>
+          {selected && (
+            <PolicyDetailPanel
+              summary={selected}
+              onClose={() => setSelected(null)}
+            />
+          )}
           <div className="policy-grid">
             {sorted.map((p) => (
-              <PolicyCard key={p.id} policy={p} />
+              <PolicyCard
+                key={p.id}
+                policy={p}
+                onSelect={setSelected}
+                active={selected?.id === p.id}
+              />
             ))}
           </div>
         </>

@@ -8,6 +8,7 @@ import { daysUntilDeadline, ddayLabel } from "@/lib/dday";
 import FilterPanel from "@/components/FilterPanel";
 import PolicyCard from "@/components/PolicyCard";
 import BannerCarousel from "@/components/BannerCarousel";
+import PolicyDetailPanel from "@/components/PolicyDetailPanel";
 
 const PAGE_SIZE = 20;
 const TARGETS: PolicyTarget[] = ["대학생", "취업준비생", "재직자", "무직"];
@@ -68,10 +69,8 @@ function SkeletonGrid() {
     <div className="policy-grid">
       {Array.from({ length: 6 }).map((_, i) => (
         <div className="skeleton-card" key={i}>
-          <div className="sk-line sk-tag" />
           <div className="sk-line sk-title" />
-          <div className="sk-line sk-text" />
-          <div className="sk-line sk-text short" />
+          <div className="sk-line sk-img" />
           <div className="sk-meta" />
           <div className="sk-line sk-btn" />
         </div>
@@ -103,6 +102,9 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 인라인 상세 패널에 표시할 선택된 정책
+  const [selected, setSelected] = useState<Policy | null>(null);
 
   const reqId = useRef(0);
 
@@ -230,9 +232,20 @@ function HomeContent() {
             </div>
           ) : (
             <>
+              {selected && (
+                <PolicyDetailPanel
+                  summary={selected}
+                  onClose={() => setSelected(null)}
+                />
+              )}
               <div className="policy-grid">
                 {policies.map((p) => (
-                  <PolicyCard key={p.id} policy={p} />
+                  <PolicyCard
+                    key={p.id}
+                    policy={p}
+                    onSelect={setSelected}
+                    active={selected?.id === p.id}
+                  />
                 ))}
               </div>
               <div className="load-more-wrap">

@@ -287,6 +287,8 @@ function normalizeList(raw: RawPolicy): Policy {
     applyEnd: end,
     url: raw.aplyUrlAddr?.trim() || raw.refUrlAddr1?.trim() ||
       `https://www.youthcenter.go.kr/youngPlcyUnif/youngPlcyUnifDtl.do?bizId=${raw.plcyNo}`,
+    // 온통청년 API 는 공고 이미지를 제공하지 않으므로 null (있는 소스면 여기서 매핑)
+    imageUrl: null,
     tags: (raw.plcyKywdNm ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     views: Number(raw.inqCnt) || 0,
     registeredAt: raw.frstRegDt ?? null,
